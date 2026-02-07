@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chord Master</title>
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#30e3ca">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Chord Master">
+    
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); 
+            color: #e4e4e4; 
+            margin: 0; 
+            padding: 10px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            min-height: 100vh;
+            touch-action: manipulation;
+            overflow: hidden;
+        }
+        .container { 
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 15px; 
+            border-radius: 20px; 
+            text-align: center; 
+            width: 100%; 
+            max-width: 500px;
+            max-height: 100vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: box-shadow 0.3s ease;
+        }
+        
+        h2 { 
+            margin: 0 0 15px 0; 
+            font-size: 1.5rem; 
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+        
+        /* Menu Screen Styles */
+        .menu-section {
+            margin: 15px 0;
+        }
+        
+        .menu-section h3 {
+            font-size: 1rem;
+            font-weight: 400;
+            margin-bottom: 10px;
+            color: #64dfdf;
+            letter-spacing: 1px;
+        }
+        
+        .selection-bar { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 10px; 
+            background: rgba(0, 0, 0, 0.3); 
+            padding: 6px; 
+            border-radius: 12px; 
+        }
+        
+        .selection-btn { 
+            flex: 1; 
+            padding: 12px 10px; 
+            border-radius: 10px; 
+            border: none; 
+            font-weight: 600; 
+            font-size: 0.85rem; 
+            cursor: pointer; 
+            color: white; 
+            opacity: 0.5; 
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+        }
+        
+        .selection-btn:hover { opacity: 0.7; }
+        .selection-btn.selected { 
+            opacity: 1; 
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+        }
+        
+        .selection-btn.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 4px;
+            right: 8px;
+            font-size: 1rem;
+        }
+        
+        .easy { 
+            background: linear-gradient(135deg, rgba(86, 171, 47, 0.3) 0%, rgba(168, 224, 99, 0.3) 100%);
+            border: 1px solid rgba(168, 224, 99, 0.4);
+        }
+        .medium { 
+            background: linear-gradient(135deg, rgba(242, 153, 74, 0.3) 0%, rgba(242, 201, 76, 0.3) 100%);
+            border: 1px solid rgba(242, 201, 76, 0.4);
+        }
+        .hard { 
+            background: linear-gradient(135deg, rgba(235, 51, 73, 0.3) 0%, rgba(244, 92, 67, 0.3) 100%);
+            border: 1px solid rgba(244, 92, 67, 0.4);
+        }
+        .one-hand { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .two-hand { background: linear-gradient(135deg, #30e3ca 0%, #48b9b9 100%); }
+        
+        .start-btn {
+            background: linear-gradient(135deg, #30e3ca 0%, #48b9b9 100%);
+            color: #1a1a2e;
+            padding: 14px 30px;
+            border-radius: 12px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+        
+        .start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(48, 227, 202, 0.5);
+        }
+        
+        .start-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Game Screen Styles */
+        .notes-display { 
+            font-size: 1.5rem; 
+            font-weight: 300; 
+            color: #64dfdf; 
+            margin: 15px 0; 
+            min-height: 2rem;
+            letter-spacing: 3px;
+            white-space: nowrap;
+        }
+        
+        .notes-display.compact {
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+        }
+        
+        .notes-display.very-compact {
+            font-size: 1rem;
+            letter-spacing: 1px;
+        }
+        
+        /* Piano */
+        .piano { 
+            display: flex; 
+            justify-content: center; 
+            height: 80px; 
+            margin: 15px 0; 
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+        }
+        .key { 
+            border: 1px solid #000; 
+            height: 100%; 
+            width: 30px; 
+            background: linear-gradient(180deg, #ffffff 0%, #f0f0f0 100%); 
+            border-radius: 0 0 6px 6px; 
+            cursor: pointer; 
+            position: relative; 
+            transition: all 0.1s ease;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 3px;
+        }
+        .key-label {
+            font-size: 0.6rem;
+            font-weight: 600;
+            color: #666;
+            user-select: none;
+        }
+        .key-label.hidden-label {
+            display: none;
+        }
+        .key:hover { background: linear-gradient(180deg, #f0f0f0 0%, #e0e0e0 100%); }
+        .key.black { 
+            background: linear-gradient(180deg, #2c2c2c 0%, #1a1a1a 100%); 
+            height: 65%; 
+            width: 20px; 
+            margin-left: -10px; 
+            margin-right: -10px; 
+            z-index: 2; 
+            border-radius: 0 0 4px 4px;
+            padding-bottom: 2px;
+        }
+        .key.black .key-label {
+            font-size: 0.5rem;
+            color: #888;
+        }
+        .key.black:hover { background: linear-gradient(180deg, #3c3c3c 0%, #2a2a2a 100%); }
+        .key.highlight { 
+            background: linear-gradient(180deg, #64dfdf 0%, #48b9b9 100%) !important; 
+            border-top: 4px solid #30e3ca;
+        }
+        .key.active { 
+            background: linear-gradient(180deg, #30e3ca 0%, #20c9b0 100%) !important; 
+        }
+
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            border-radius: 10px; 
+            border: 2px solid rgba(255, 255, 255, 0.1); 
+            background: rgba(0, 0, 0, 0.3); 
+            color: white; 
+            font-size: 1.1rem; 
+            margin-bottom: 10px; 
+            text-align: center;
+            transition: all 0.3s ease;
+            caret-color: #30e3ca;
+        }
+        input:focus {
+            outline: none;
+            border-color: #64dfdf;
+            background: rgba(0, 0, 0, 0.4);
+        }
+        
+        /* Custom Music Keyboard */
+        .music-keyboard {
+            display: none;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 10px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .music-keyboard.active {
+            display: block;
+        }
+        
+        .kb-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 6px;
+            justify-content: center;
+        }
+        
+        .kb-key {
+            background: linear-gradient(135deg, rgba(100, 223, 223, 0.2) 0%, rgba(72, 185, 185, 0.2) 100%);
+            border: 1px solid rgba(100, 223, 223, 0.3);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 45px;
+            text-align: center;
+        }
+        
+        .kb-key:active {
+            background: linear-gradient(135deg, #30e3ca 0%, #48b9b9 100%);
+            transform: scale(0.95);
+        }
+        
+        .kb-key.wide {
+            flex: 1;
+            min-width: 80px;
+        }
+        
+        .kb-key.delete {
+            background: linear-gradient(135deg, rgba(235, 51, 73, 0.3) 0%, rgba(244, 92, 67, 0.3) 100%);
+            border-color: rgba(244, 92, 67, 0.4);
+        }
+        
+        .main-btn { 
+            flex: 1; 
+            background: linear-gradient(135deg, #30e3ca 0%, #48b9b9 100%); 
+            color: #1a1a2e; 
+            padding: 10px; 
+            border-radius: 10px; 
+            font-weight: 600; 
+            border: none; 
+            cursor: pointer; 
+            margin: 3px; 
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+        .main-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(48, 227, 202, 0.4); }
+        .main-btn:active { transform: translateY(0); }
+        .main-btn.hear { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        
+        #feedback { font-weight: 600; margin: 8px 0; min-height: 1rem; font-size: 0.95rem; }
+        #explanation { 
+            font-size: 0.8rem; 
+            color: #b0b0b0; 
+            margin: 10px 0; 
+            padding: 10px; 
+            background: rgba(0, 0, 0, 0.3); 
+            border-radius: 10px; 
+            border-left: 3px solid #64dfdf; 
+            text-align: left; 
+            line-height: 1.5; 
+        }
+        #hint-display { 
+            font-size: 0.85rem; 
+            color: #f2c94c; 
+            margin: 8px 0;
+            min-height: 1rem; 
+            font-style: italic; 
+        }
+        
+        .pulse-correct { animation: pulse-green 0.5s ease; }
+        .pulse-wrong { animation: pulse-red 0.5s ease; }
+        
+        @keyframes pulse-green {
+            0%, 100% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
+            50% { box-shadow: 0 8px 32px rgba(46, 204, 113, 0.6), 0 0 20px rgba(46, 204, 113, 0.4); }
+        }
+        
+        @keyframes pulse-red {
+            0%, 100% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
+            50% { box-shadow: 0 8px 32px rgba(231, 76, 60, 0.6), 0 0 20px rgba(231, 76, 60, 0.4); }
+        }
+        
+        .hidden { display: none; }
+        
+        .btn-group { display: flex; gap: 6px; margin-top: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Menu Screen -->
+        <div id="menu-screen">
+            <h2>CHORD MASTER</h2>
+            <p style="color: #b0b0b0; margin-bottom: 30px;">Train your ear to recognize chords</p>
+            
+            <div class="menu-section">
+                <h3>Select Difficulty</h3>
+                <div class="selection-bar">
+                    <button class="selection-btn easy" onclick="selectDifficulty('easy')">Easy</button>
+                    <button class="selection-btn medium" onclick="selectDifficulty('medium')">Medium</button>
+                    <button class="selection-btn hard" onclick="selectDifficulty('hard')">Hard</button>
+                </div>
+            </div>
+            
+            <div class="menu-section">
+                <h3>Select Hand Mode</h3>
+                <div class="selection-bar">
+                    <button class="selection-btn one-hand" onclick="selectHandMode('one')">
+                        One Hand
+                        <div style="font-size: 0.7rem; opacity: 0.8; margin-top: 4px;">Simple voicings</div>
+                    </button>
+                    <button class="selection-btn two-hand" onclick="selectHandMode('two')">
+                        Two Hands
+                        <div style="font-size: 0.7rem; opacity: 0.8; margin-top: 4px;">Piano voicings</div>
+                    </button>
+                </div>
+            </div>
+            
+            <button class="start-btn" id="start-game-btn" onclick="startGame()" disabled>Start Game</button>
+        </div>
+        
+        <!-- Game Screen -->
+        <div id="game-screen" class="hidden">
+            <h2>CHORD MASTER</h2>
+            <div id="difficulty-display" style="color: #b0b0b0; margin-bottom: 10px;"></div>
+            <div id="streak-display" style="color: #64dfdf; font-size: 0.9rem; margin-bottom: 15px;">
+                Streak: <span id="current-streak">0</span> | Best: <span id="max-streak">0</span>
+            </div>
+            
+            <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+                <button class="main-btn" onclick="toggleNoteLabels()" style="padding: 8px 16px; font-size: 0.8rem;">
+                    <span id="label-toggle-text">Hide Note Labels</span>
+                </button>
+            </div>
+            
+            <div class="notes-display" id="notes-display">♪ ♪ ♪</div>
+            
+            <div class="piano" id="piano"></div>
+            
+            <input type="text" id="userGuess" placeholder="Type your guess (e.g., Cmaj7, Am, F#dim)" autocomplete="off" readonly>
+            
+            <!-- Custom Music Keyboard -->
+            <div class="music-keyboard active" id="music-keyboard">
+                <div class="kb-row">
+                    <div class="kb-key" onclick="addToGuess('C')">C</div>
+                    <div class="kb-key" onclick="addToGuess('D')">D</div>
+                    <div class="kb-key" onclick="addToGuess('E')">E</div>
+                    <div class="kb-key" onclick="addToGuess('F')">F</div>
+                    <div class="kb-key" onclick="addToGuess('G')">G</div>
+                    <div class="kb-key" onclick="addToGuess('A')">A</div>
+                    <div class="kb-key" onclick="addToGuess('B')">B</div>
+                </div>
+                <div class="kb-row">
+                    <div class="kb-key" onclick="addToGuess('#')">#</div>
+                    <div class="kb-key" onclick="addToGuess('b')">♭</div>
+                    <div class="kb-key" onclick="addToGuess('m')">m</div>
+                    <div class="kb-key" onclick="addToGuess('7')">7</div>
+                    <div class="kb-key" onclick="addToGuess('9')">9</div>
+                </div>
+                <div class="kb-row">
+                    <div class="kb-key" onclick="addToGuess('maj')">maj</div>
+                    <div class="kb-key" onclick="addToGuess('dim')">dim</div>
+                    <div class="kb-key" onclick="addToGuess('aug')">aug</div>
+                    <div class="kb-key" onclick="addToGuess('sus')">sus</div>
+                </div>
+                <div class="kb-row">
+                    <div class="kb-key" onclick="addToGuess('add')">add</div>
+                    <div class="kb-key" onclick="addToGuess('2')">2</div>
+                    <div class="kb-key" onclick="addToGuess('4')">4</div>
+                    <div class="kb-key" onclick="addToGuess('6')">6</div>
+                    <div class="kb-key wide delete" onclick="deleteLastChar()">⌫ Delete</div>
+                </div>
+            </div>
+            
+            <div class="btn-group">
+                <button class="main-btn hear" onclick="playCurrentChord()">Hear Again</button>
+                <button class="main-btn" onclick="checkAnswer()">Check</button>
+            </div>
+            
+            <div class="btn-group">
+                <button class="main-btn" onclick="showHint()">Hint</button>
+                <button class="main-btn" onclick="giveUp()">Give Up</button>
+                <button class="main-btn" onclick="nextChord()">Next</button>
+            </div>
+            
+            <div id="hint-display"></div>
+            <div id="feedback"></div>
+            <div id="explanation"></div>
+            
+            <button class="main-btn" onclick="returnToMenu()" style="margin-top: 10px; background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white;">Back to Menu</button>
+        </div>
+    </div>
+
+<script>
+    console.log('Chord Master: Script loaded');
+    
+    // Game State
+    var menuState = {
+        difficulty: null,
+        handMode: null
+    };
+    
+    var state = {
+        difficulty: 'easy',
+        handMode: 'one',
+        root: '',
+        type: '',
+        notes: [],
+        hintLevel: 0,
+        showNoteLabels: true,
+        currentStreak: 0,
+        maxStreak: 0
+    };
+    
+    // Note definitions - including both sharp and flat notations
+    var NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    var NOTES_WITH_FLATS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+    var NOTES_TWO_OCTAVE = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B',
+                             'C2', 'C#2', 'D2', 'D#2', 'E2', 'F2', 'F#2', 'G2', 'G#2', 'A2', 'A#2', 'B2'];
+    var NOTES_TWO_OCTAVE_WITH_FLATS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B',
+                                        'C2', 'Db2', 'D2', 'Eb2', 'E2', 'F2', 'Gb2', 'G2', 'Ab2', 'A2', 'Bb2', 'B2'];
+    
+    // Chord definitions
+    var CHORD_TYPES = {
+        easy: ['Major', 'Minor'],
+        medium: ['Major', 'Minor', 'Diminished', 'Augmented', '7', 'Major 7th', 'Minor 7th', 'Sus2', 'Sus4'],
+        hard: ['Major', 'Minor', 'Diminished', 'Augmented', '7', 'Major 7th', 'Minor 7th', '9', 'Major 9th', 'Minor 9th', '11', '13', 'Sus2', 'Sus4', 'Add9', '6', 'Minor 6th']
+    };
+    
+    // Chord formulas (semitones from root)
+    var CHORD_FORMULAS = {
+        "Major": [0, 4, 7],
+        "Minor": [0, 3, 7],
+        "Diminished": [0, 3, 6],
+        "Augmented": [0, 4, 8],
+        "7": [0, 4, 7, 10],
+        "Major 7th": [0, 4, 7, 11],
+        "Minor 7th": [0, 3, 7, 10],
+        "9": [0, 4, 7, 10, 14],
+        "Major 9th": [0, 4, 7, 11, 14],
+        "Minor 9th": [0, 3, 7, 10, 14],
+        "11": [0, 4, 7, 10, 14, 17],
+        "13": [0, 4, 7, 10, 14, 21],
+        "Sus2": [0, 2, 7],
+        "Sus4": [0, 5, 7],
+        "Add9": [0, 4, 7, 14],
+        "6": [0, 4, 7, 9],
+        "Minor 6th": [0, 3, 7, 9]
+    };
+    
+    // Two-hand voicings with inversions
+    var TWO_HAND_VOICINGS = {
+        "Major": {
+            root: { left: [0, 7], right: [12, 16, 19] },          // C | C E G
+            first: { left: [0, 7], right: [16, 19, 24] },         // C | E G C
+            second: { left: [7], right: [12, 19, 16] }            // G | C G E
+        },
+        "Minor": {
+            root: { left: [0, 7], right: [12, 15, 19] },          // C | C Eb G
+            first: { left: [0, 7], right: [15, 19, 24] },         // C | Eb G C
+            second: { left: [7], right: [12, 19, 15] }            // G | C G Eb
+        },
+        "Diminished": {
+            root: { left: [0, 6], right: [12, 15, 18] },
+            first: { left: [0, 6], right: [15, 18, 24] }
+        },
+        "Augmented": {
+            root: { left: [0, 8], right: [12, 16, 20] },
+            first: { left: [0, 8], right: [16, 20, 24] }
+        },
+        "7": {
+            root: { left: [0, 10], right: [12, 16, 19] },         // C Bb | C E G
+            first: { left: [7, 10], right: [12, 16, 19] },        // G Bb | C E G
+            second: { left: [0, 10], right: [16, 19, 22] }        // C Bb | E G Bb
+        },
+        "Major 7th": {
+            root: { left: [0, 11], right: [12, 16, 19] },         // C B | C E G
+            first: { left: [7, 11], right: [12, 16, 19] },        // G B | C E G
+            second: { left: [0, 11], right: [16, 19, 23] }        // C B | E G B
+        },
+        "Minor 7th": {
+            root: { left: [0, 10], right: [12, 15, 19] },         // C Bb | C Eb G
+            first: { left: [7, 10], right: [12, 15, 19] },        // G Bb | C Eb G
+            second: { left: [0, 10], right: [15, 19, 22] }        // C Bb | Eb G Bb
+        },
+        "9": {
+            root: { left: [0, 10, 14], right: [12, 16, 19] },
+            first: { left: [7, 10, 14], right: [12, 16, 19] }
+        },
+        "Major 9th": {
+            root: { left: [0, 11, 14], right: [12, 16, 19] },
+            first: { left: [7, 11, 14], right: [12, 16, 19] }
+        },
+        "Minor 9th": {
+            root: { left: [0, 10, 14], right: [12, 15, 19] },
+            first: { left: [7, 10, 14], right: [12, 15, 19] }
+        },
+        "11": {
+            root: { left: [0, 10, 14, 17], right: [12, 16, 19] }
+        },
+        "13": {
+            root: { left: [0, 10, 14], right: [16, 19, 21] }
+        },
+        "Sus2": {
+            root: { left: [0, 7], right: [12, 14, 19] },
+            first: { left: [0, 7], right: [14, 19, 24] }
+        },
+        "Sus4": {
+            root: { left: [0, 7], right: [12, 17, 19] },
+            first: { left: [0, 7], right: [17, 19, 24] }
+        },
+        "Add9": {
+            root: { left: [0, 7], right: [12, 16, 19, 14] },
+            first: { left: [0, 7], right: [16, 19, 24, 14] }
+        },
+        "6": {
+            root: { left: [0, 9], right: [12, 16, 19] },
+            first: { left: [7, 9], right: [12, 16, 19] }
+        },
+        "Minor 6th": {
+            root: { left: [0, 9], right: [12, 15, 19] },
+            first: { left: [7, 9], right: [12, 15, 19] }
+        }
+    };
+    
+    var INPUT_MAP = {
+        "": "Major", "maj": "Major", "major": "Major", "m": "Minor", "min": "Minor", "minor": "Minor",
+        "dim": "Diminished", "diminished": "Diminished", "aug": "Augmented", "augmented": "Augmented",
+        "+": "Augmented", "7": "7", "dom7": "7", "maj7": "Major 7th", "major7": "Major 7th",
+        "m7": "Minor 7th", "min7": "Minor 7th", "minor7": "Minor 7th", "9": "9", "dom9": "9",
+        "maj9": "Major 9th", "major9": "Major 9th", "m9": "Minor 9th", "min9": "Minor 9th",
+        "minor9": "Minor 9th", "11": "11", "dom11": "11", "13": "13", "dom13": "13",
+        "sus2": "Sus2", "sus4": "Sus4", "add9": "Add9", "6": "6", "maj6": "6",
+        "m6": "Minor 6th", "min6": "Minor 6th", "minor6": "Minor 6th"
+    };
+    
+    // Menu functions
+    function selectDifficulty(difficulty) {
+        menuState.difficulty = difficulty;
+        document.querySelectorAll('.selection-bar .easy, .selection-bar .medium, .selection-bar .hard').forEach(function(btn) {
+            btn.classList.remove('selected');
+        });
+        // Find and select the button that was clicked
+        var buttons = document.querySelectorAll('.selection-bar .easy, .selection-bar .medium, .selection-bar .hard');
+        buttons.forEach(function(btn) {
+            if (btn.classList.contains(difficulty)) {
+                btn.classList.add('selected');
+            }
+        });
+        updateStartButton();
+    }
+    
+    function selectHandMode(mode) {
+        menuState.handMode = mode;
+        document.querySelectorAll('.selection-bar .one-hand, .selection-bar .two-hand').forEach(function(btn) {
+            btn.classList.remove('selected');
+        });
+        // Find and select the button that was clicked
+        var buttonClass = mode === 'one' ? 'one-hand' : 'two-hand';
+        var buttons = document.querySelectorAll('.selection-bar .' + buttonClass);
+        buttons.forEach(function(btn) {
+            btn.classList.add('selected');
+        });
+        updateStartButton();
+    }
+    
+    function updateStartButton() {
+        var btn = document.getElementById('start-game-btn');
+        if (menuState.difficulty && menuState.handMode) {
+            btn.disabled = false;
+        } else {
+            btn.disabled = true;
+        }
+    }
+    
+    function startGame() {
+        state.difficulty = menuState.difficulty;
+        state.handMode = menuState.handMode;
+        
+        document.getElementById('menu-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+        
+        var diffText = state.difficulty.charAt(0).toUpperCase() + state.difficulty.slice(1);
+        var handText = state.handMode === 'one' ? 'One Hand' : 'Two Hands';
+        document.getElementById('difficulty-display').innerText = diffText + ' • ' + handText;
+        
+        buildPiano();
+        nextChord();
+    }
+    
+    function returnToMenu() {
+        document.getElementById('game-screen').classList.add('hidden');
+        document.getElementById('menu-screen').classList.remove('hidden');
+        
+        // Reset feedback
+        document.getElementById('feedback').innerText = '';
+        document.getElementById('explanation').innerHTML = '';
+        document.getElementById('hint-display').innerText = '';
+        document.getElementById('userGuess').value = '';
+        document.getElementById('notes-display').innerText = '♪ ♪ ♪';
+        
+        // Clear highlights
+        var keys = document.querySelectorAll('.key');
+        keys.forEach(function(key) {
+            key.classList.remove('highlight');
+        });
+    }
+    
+    // Audio context
+    var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playNote(index) {
+        var notes = state.handMode === 'two' ? NOTES_TWO_OCTAVE : NOTES;
+        var baseFreq = 261.63; // C4
+        var freq = baseFreq * Math.pow(2, index / 12);
+        
+        var oscillator = audioCtx.createOscillator();
+        var gainNode = audioCtx.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.value = freq;
+        
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+        
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + 1.5);
+        
+        // Visual feedback
+        var keys = document.querySelectorAll('.key');
+        if (keys[index]) {
+            keys[index].classList.add('active');
+            setTimeout(function() { keys[index].classList.remove('active'); }, 300);
+        }
+    }
+    
+    function toggleNoteLabels() {
+        state.showNoteLabels = !state.showNoteLabels;
+        var labels = document.querySelectorAll('.key-label');
+        var toggleText = document.getElementById('label-toggle-text');
+        
+        labels.forEach(function(label) {
+            if (state.showNoteLabels) {
+                label.classList.remove('hidden-label');
+            } else {
+                label.classList.add('hidden-label');
+            }
+        });
+        
+        toggleText.innerText = state.showNoteLabels ? 'Hide Note Labels' : 'Show Note Labels';
+    }
+    
+    function buildPiano() {
+        var piano = document.getElementById('piano');
+        piano.innerHTML = '';
+        var pattern = [0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0]; // Black key positions
+        var notes = state.handMode === 'two' ? NOTES_TWO_OCTAVE : NOTES;
+        
+        for (var i = 0; i < notes.length; i++) {
+            var key = document.createElement('div');
+            key.className = 'key' + (pattern[i % 12] ? ' black' : '');
+            
+            // Add note label
+            var label = document.createElement('div');
+            label.className = 'key-label';
+            label.innerText = notes[i].replace('2', ''); // Remove the '2' octave marker for display
+            key.appendChild(label);
+            
+            key.onclick = (function(idx) { return function() { playNote(idx); }; })(i);
+            piano.appendChild(key);
+        }
+    }
+    
+    function nextChord() {
+        var types = CHORD_TYPES[state.difficulty];
+        state.type = types[Math.floor(Math.random() * types.length)];
+        
+        // Randomly choose between sharp and flat notation
+        var useFlats = Math.random() < 0.5;
+        var rootNotes = useFlats ? NOTES_WITH_FLATS : NOTES;
+        state.root = rootNotes[Math.floor(Math.random() * rootNotes.length)];
+        
+        generateChordNotes();
+        
+        // Sort notes by their position on the keyboard (left to right)
+        var notes = state.handMode === 'two' ? NOTES_TWO_OCTAVE : NOTES;
+        var sortedNotes = state.notes.slice().sort(function(a, b) {
+            return notes.indexOf(a) - notes.indexOf(b);
+        });
+        
+        // Display the notes in keyboard order
+        var notesDisplay = document.getElementById('notes-display');
+        notesDisplay.innerText = sortedNotes.join(' - ');
+        
+        // Adjust font size based on note count and length
+        notesDisplay.classList.remove('compact', 'very-compact');
+        var noteCount = sortedNotes.length;
+        var totalLength = sortedNotes.join(' - ').length;
+        
+        if (totalLength > 25 || noteCount > 5) {
+            notesDisplay.classList.add('very-compact');
+        } else if (totalLength > 18 || noteCount > 4) {
+            notesDisplay.classList.add('compact');
+        }
+        
+        // Highlight the keys
+        highlightChordKeys();
+        
+        document.getElementById('userGuess').value = '';
+        document.getElementById('feedback').innerText = '';
+        document.getElementById('explanation').innerHTML = '';
+        document.getElementById('hint-display').innerText = '';
+        state.hintLevel = 0;
+        
+        setTimeout(function() { playCurrentChord(); }, 300);
+    }
+    
+    function highlightChordKeys() {
+        // Clear previous highlights
+        var keys = document.querySelectorAll('.key');
+        keys.forEach(function(key) {
+            key.classList.remove('highlight');
+        });
+        
+        // Highlight current chord keys
+        var notes = state.handMode === 'two' ? NOTES_TWO_OCTAVE : NOTES;
+        state.notes.forEach(function(noteName) {
+            var idx = notes.indexOf(noteName);
+            if (idx !== -1 && keys[idx]) {
+                keys[idx].classList.add('highlight');
+            }
+        });
+    }
+    
+    function generateChordNotes() {
+        // Normalize root to sharp notation for calculation
+        var normalizedRoot = normalizeNote(state.root);
+        var rootIndex = NOTES.indexOf(normalizedRoot);
+        var formula = CHORD_FORMULAS[state.type];
+        
+        if (state.handMode === 'one') {
+            // One-hand voicing
+            var baseNotes = formula.map(function(interval) {
+                return NOTES[(rootIndex + interval) % 12];
+            });
+            
+            // Apply inversions only if NOT easy difficulty
+            if (state.difficulty === 'easy') {
+                // Easy mode: always root position, no inversions
+                state.notes = baseNotes;
+            } else {
+                // Medium/Hard: apply random inversions
+                var inversion = Math.floor(Math.random() * baseNotes.length);
+                state.notes = baseNotes.slice(inversion).concat(baseNotes.slice(0, inversion));
+            }
+        } else {
+            // Two-hand voicing with inversions
+            var voicings = TWO_HAND_VOICINGS[state.type];
+            if (!voicings) {
+                // Fallback to simple voicing
+                state.notes = formula.map(function(interval) {
+                    var noteIndex = (rootIndex + interval) % 12;
+                    var octave = Math.floor((rootIndex + interval) / 12);
+                    return octave > 0 ? NOTES[noteIndex] + '2' : NOTES[noteIndex];
+                });
+                return;
+            }
+            
+            // Select inversion based on difficulty
+            var inversionKeys = Object.keys(voicings);
+            var inversionKey;
+            
+            if (state.difficulty === 'easy') {
+                inversionKey = 'root'; // Always root position
+            } else if (state.difficulty === 'medium') {
+                // Root or first inversion
+                inversionKey = inversionKeys[Math.floor(Math.random() * Math.min(2, inversionKeys.length))];
+            } else {
+                // Any inversion
+                inversionKey = inversionKeys[Math.floor(Math.random() * inversionKeys.length)];
+            }
+            
+            var voicing = voicings[inversionKey];
+            var allIntervals = voicing.left.concat(voicing.right);
+            
+            // Convert intervals to notes with octaves
+            var notesWithOctaves = allIntervals.map(function(interval) {
+                var totalSemitones = rootIndex + interval;
+                var noteIndex = totalSemitones % 12;
+                var octave = Math.floor(totalSemitones / 12);
+                return octave > 0 ? NOTES[noteIndex] + '2' : NOTES[noteIndex];
+            });
+            
+            // Remove duplicates while preserving order
+            var seen = {};
+            state.notes = notesWithOctaves.filter(function(note) {
+                if (seen[note]) {
+                    return false;
+                }
+                seen[note] = true;
+                return true;
+            });
+        }
+    }
+    
+    function getChordExplanation(root, type) {
+        var formula = CHORD_FORMULAS[type];
+        var rootIndex = NOTES.indexOf(root);
+        var noteNames = formula.map(function(interval) {
+            return NOTES[(rootIndex + interval) % 12];
+        });
+        
+        var explanations = {
+            "Major": "A major chord sounds <strong>happy and bright</strong>. It consists of a root, major 3rd (4 semitones), and perfect 5th (7 semitones). Formula: 1 - 3 - 5",
+            
+            "Minor": "A minor chord sounds <strong>sad and melancholic</strong>. It has a root, minor 3rd (3 semitones), and perfect 5th (7 semitones). Formula: 1 - ♭3 - 5",
+            
+            "Diminished": "A diminished chord sounds <strong>tense and unstable</strong>. It has a root, minor 3rd, and diminished 5th (6 semitones). Formula: 1 - ♭3 - ♭5",
+            
+            "Augmented": "An augmented chord sounds <strong>mysterious and suspenseful</strong>. It has a root, major 3rd, and augmented 5th (8 semitones). Formula: 1 - 3 - #5",
+            
+            "7": "A dominant 7th chord sounds <strong>bluesy and wants to resolve</strong>. It has a root, major 3rd, perfect 5th, and minor 7th (10 semitones). Formula: 1 - 3 - 5 - ♭7",
+            
+            "Major 7th": "A major 7th chord sounds <strong>dreamy and jazzy</strong>. It has a root, major 3rd, perfect 5th, and major 7th (11 semitones). Formula: 1 - 3 - 5 - 7",
+            
+            "Minor 7th": "A minor 7th chord sounds <strong>smooth and mellow</strong>. It has a root, minor 3rd, perfect 5th, and minor 7th (10 semitones). Formula: 1 - ♭3 - 5 - ♭7",
+            
+            "9": "A dominant 9th chord is <strong>rich and bluesy</strong>. It adds the 9th (2nd octave up) to a dominant 7th chord. Formula: 1 - 3 - 5 - ♭7 - 9",
+            
+            "Major 9th": "A major 9th chord sounds <strong>lush and sophisticated</strong>. It adds the 9th to a major 7th chord. Formula: 1 - 3 - 5 - 7 - 9",
+            
+            "Minor 9th": "A minor 9th chord has a <strong>modern, sophisticated</strong> sound. It adds the 9th to a minor 7th chord. Formula: 1 - ♭3 - 5 - ♭7 - 9",
+            
+            "11": "A dominant 11th chord is <strong>complex and jazzy</strong>. It extends the dominant 9th with an 11th. Formula: 1 - 3 - 5 - ♭7 - 9 - 11",
+            
+            "13": "A dominant 13th chord is <strong>ultra-jazzy and colorful</strong>. It extends to the 13th (6th octave up). Formula: 1 - 3 - 5 - ♭7 - 9 - 13",
+            
+            "Sus2": "A suspended 2nd chord sounds <strong>open and ambiguous</strong>. It replaces the 3rd with the 2nd. Formula: 1 - 2 - 5",
+            
+            "Sus4": "A suspended 4th chord creates <strong>tension seeking resolution</strong>. It replaces the 3rd with the 4th. Formula: 1 - 4 - 5",
+            
+            "Add9": "An add9 chord is <strong>bright and shimmery</strong>. It's a major chord with an added 9th. Formula: 1 - 3 - 5 - 9",
+            
+            "6": "A major 6th chord sounds <strong>cheerful and vintage</strong>. It adds a major 6th to the major triad. Formula: 1 - 3 - 5 - 6",
+            
+            "Minor 6th": "A minor 6th chord has a <strong>bittersweet</strong> quality. It adds a major 6th to the minor triad. Formula: 1 - ♭3 - 5 - 6"
+        };
+        
+        return "<strong>" + root + " " + type + ":</strong> " + noteNames.join(" - ") + "<br>" + explanations[type];
+    }
+    
+    function playCurrentChord() {
+        state.notes.forEach(function(name, i) {
+            setTimeout(function() { 
+                var notes = state.handMode === 'two' ? NOTES_TWO_OCTAVE : NOTES;
+                var idx = notes.indexOf(name);
+                if (idx !== -1) playNote(idx);
+            }, i * 60);
+        });
+        
+        // Re-highlight after playing to ensure highlights stay
+        setTimeout(function() {
+            highlightChordKeys();
+        }, state.notes.length * 60 + 100);
+    }
+    
+    function vibrate(pattern) {
+        if ('vibrate' in navigator) {
+            navigator.vibrate(pattern);
+        }
+    }
+    
+    function showHint() {
+        var hintDisplay = document.getElementById('hint-display');
+        
+        if (state.hintLevel === 0) {
+            hintDisplay.innerText = "Hint 1: The root note is " + state.root;
+            state.hintLevel = 1;
+        } else if (state.hintLevel === 1) {
+            var category = "";
+            if (state.type === "Major") category = "a Major chord";
+            else if (state.type === "Minor") category = "a Minor chord";
+            else if (state.type === "Diminished") category = "a Diminished chord";
+            else if (state.type === "Augmented") category = "an Augmented chord";
+            else if (state.type === "7") category = "a Dominant 7th chord";
+            else if (state.type === "Major 7th") category = "a Major 7th chord";
+            else if (state.type === "Minor 7th") category = "a Minor 7th chord";
+            else if (state.type === "9") category = "a Dominant 9th chord";
+            else if (state.type === "Major 9th") category = "a Major 9th chord";
+            else if (state.type === "Minor 9th") category = "a Minor 9th chord";
+            else if (state.type === "11") category = "a Dominant 11th chord";
+            else if (state.type === "13") category = "a Dominant 13th chord";
+            else if (state.type === "Sus2") category = "a Suspended 2nd chord";
+            else if (state.type === "Sus4") category = "a Suspended 4th chord";
+            else if (state.type === "Add9") category = "an Add9 chord";
+            else if (state.type === "6") category = "a Major 6th chord";
+            else if (state.type === "Minor 6th") category = "a Minor 6th chord";
+            
+            hintDisplay.innerText = "Hint 2: It's " + category;
+            state.hintLevel = 2;
+        } else if (state.hintLevel === 2) {
+            var answer = formatChordName(state.root, state.type);
+            hintDisplay.innerText = "Answer: " + answer;
+            document.getElementById('explanation').innerHTML = getChordExplanation(state.root, state.type);
+            document.getElementById('feedback').innerText = "";
+            state.hintLevel = 3;
+        } else {
+            hintDisplay.innerText = "No more hints! Try the next chord.";
+        }
+    }
+    
+    function giveUp() {
+        var answer = formatChordName(state.root, state.type);
+        document.getElementById('feedback').innerText = "The answer was: " + answer;
+        document.getElementById('feedback').style.color = "#f2c94c";
+        document.getElementById('explanation').innerHTML = getChordExplanation(state.root, state.type);
+        document.getElementById('hint-display').innerText = "";
+        playCurrentChord();
+    }
+    
+    function parseUserAnswer(input) {
+        var val = input.toUpperCase().trim().replace(/\s+/g, '');
+        
+        var root = '';
+        if (val.length >= 2 && (val[1] === '#' || val[1] === 'B')) {
+            root = val.substring(0, 2);
+            val = val.substring(2);
+        } else if (val.length >= 1) {
+            root = val[0];
+            val = val.substring(1);
+        }
+        
+        // Normalize root note (convert flats to sharps for comparison)
+        if (root === 'DB' || root === 'C#') root = 'C#';
+        else if (root === 'EB' || root === 'D#') root = 'D#';
+        else if (root === 'GB' || root === 'F#') root = 'F#';
+        else if (root === 'AB' || root === 'G#') root = 'G#';
+        else if (root === 'BB' || root === 'A#') root = 'A#';
+        
+        var quality = val.toLowerCase();
+        if (quality === '') quality = 'major';
+        
+        var type = INPUT_MAP[quality] || null;
+        
+        return { root: root, type: type };
+    }
+    
+    function normalizeNote(note) {
+        // Convert flats to sharps for comparison
+        var noteMap = {
+            'Db': 'C#', 'C#': 'C#',
+            'Eb': 'D#', 'D#': 'D#',
+            'Gb': 'F#', 'F#': 'F#',
+            'Ab': 'G#', 'G#': 'G#',
+            'Bb': 'A#', 'A#': 'A#',
+            'C': 'C', 'D': 'D', 'E': 'E', 'F': 'F', 'G': 'G', 'A': 'A', 'B': 'B'
+        };
+        return noteMap[note] || note;
+    }
+    
+    function checkAnswer() {
+        var userInput = document.getElementById('userGuess').value;
+        var parsed = parseUserAnswer(userInput);
+        
+        var feedback = document.getElementById('feedback');
+        var explanation = document.getElementById('explanation');
+        var container = document.querySelector('.container');
+        
+        container.classList.remove('pulse-correct', 'pulse-wrong');
+        
+        if (!parsed.root || !NOTES.includes(parsed.root)) {
+            feedback.innerText = "Invalid note! Use C, C#, D, D#, E, F, F#, G, G#, A, A#, B or Db, Eb, Gb, Ab, Bb";
+            feedback.style.color = "#f2c94c";
+            explanation.innerHTML = "";
+            return;
+        }
+        
+        if (!parsed.type) {
+            feedback.innerText = "Unknown chord type! Try: major, m, dim, aug, 7, maj7, m7";
+            feedback.style.color = "#f2c94c";
+            explanation.innerHTML = "";
+            return;
+        }
+        
+        // Normalize both the user's answer and the actual chord root for comparison
+        var normalizedUserRoot = normalizeNote(parsed.root);
+        var normalizedActualRoot = normalizeNote(state.root);
+        
+        if (normalizedUserRoot === normalizedActualRoot && parsed.type === state.type) {
+            // Correct answer - increment streak
+            state.currentStreak++;
+            if (state.currentStreak > state.maxStreak) {
+                state.maxStreak = state.currentStreak;
+            }
+            updateStreakDisplay();
+            
+            feedback.innerText = "Correct!";
+            feedback.style.color = "#2ecc71";
+            explanation.innerHTML = getChordExplanation(state.root, state.type);
+            document.getElementById('hint-display').innerText = "";
+            
+            void container.offsetWidth;
+            container.classList.add('pulse-correct');
+            
+            // Vibrate on correct answer (short pulse)
+            vibrate(100);
+            
+            playCurrentChord();
+        } else {
+            // Wrong answer - reset streak
+            state.currentStreak = 0;
+            updateStreakDisplay();
+            
+            feedback.innerText = "Try again!";
+            feedback.style.color = "#e74c3c";
+            explanation.innerHTML = "";
+            
+            void container.offsetWidth;
+            container.classList.add('pulse-wrong');
+            
+            // Vibrate on incorrect answer (double pulse)
+            vibrate([50, 50, 50]);
+        }
+    }
+    
+    function updateStreakDisplay() {
+        document.getElementById('current-streak').innerText = state.currentStreak;
+        document.getElementById('max-streak').innerText = state.maxStreak;
+    }
+    
+    function formatChordName(root, type) {
+        var shorthand = type
+            .replace("Major 7th", "maj7")
+            .replace("Major 9th", "maj9")
+            .replace("Minor 7th", "m7")
+            .replace("Minor 9th", "m9")
+            .replace("Minor 6th", "m6")
+            .replace("Minor", "m")
+            .replace("Diminished", "dim")
+            .replace("Augmented", "aug")
+            .replace("Sus2", "sus2")
+            .replace("Sus4", "sus4")
+            .replace("Add9", "add9");
+        return root + (type === "Major" ? "" : shorthand);
+    }
+    
+    // Custom Music Keyboard Functions
+    function addToGuess(char) {
+        var input = document.getElementById('userGuess');
+        input.value += char;
+        input.focus();
+    }
+    
+    function deleteLastChar() {
+        var input = document.getElementById('userGuess');
+        input.value = input.value.slice(0, -1);
+        input.focus();
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM Content Loaded');
+        
+        try {
+            var input = document.getElementById('userGuess');
+            if (input) {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') checkAnswer();
+                });
+            }
+            
+            // Register service worker for offline support
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(function(registration) {
+                        console.log('Service Worker registered successfully:', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            }
+            
+            console.log('Initialization complete');
+        } catch (error) {
+            console.error('Error during initialization:', error);
+            alert('Error loading app: ' + error.message);
+        }
+    });
+</script>
+</body>
+</html>
